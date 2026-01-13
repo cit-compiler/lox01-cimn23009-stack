@@ -13,10 +13,18 @@ public class GenerateAst {
     }
     String outputDir = args[0];
     defineAst(outputDir, "Expr", Arrays.asList(
+      "Assign   : Token name, Expr value",
       "Binary   : Expr left, Token operator, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
-      "Unary    : Token operator, Expr right"
+      "Unary    : Token operator, Expr right",
+      "Variable : Token name"
+    ));
+
+    defineAst(outputDir, "Stmt", Arrays.asList(
+      "Expression : Expr expression",
+      "Print            : Expr expression",
+      "Var              : Token name, Expr initializer"
     ));
   }
 
@@ -31,14 +39,13 @@ public class GenerateAst {
     writer.println("abstract class " + baseName + " {");
 
     defineVisitor(writer, baseName, types);
-    // The AST classes.
+
     for (String type : types) {
       String className = type.split(":")[0].trim();
       String fields = type.split(":")[1].trim(); 
       defineType(writer, baseName, className, fields);
     }
 
-    // The base accept() method.
     writer.println();
     writer.println("  abstract <R> R accept(Visitor<R> visitor);");
 
@@ -63,10 +70,8 @@ public class GenerateAst {
       String className, String fieldList) {
     writer.println("  static class " + className + " extends " + baseName + " {");
 
-    // Constructor.
     writer.println("    " + className + "(" + fieldList + ") {");
 
-    // Store parameters in fields.
     String[] fields = fieldList.split(", ");
     for (String field : fields) {
       String name = field.split(" ")[1];
@@ -74,7 +79,7 @@ public class GenerateAst {
     }
 
     writer.println("    }");
-    // Visitor pattern.
+
     writer.println();
     writer.println("    @Override");
     writer.println("    <R> R accept(Visitor<R> visitor) {");
@@ -82,7 +87,6 @@ public class GenerateAst {
         className + baseName + "(this);");
     writer.println("    }");
 
-    // Fields.
     writer.println();
     for (String field : fields) {
       writer.println("    final " + field + ";");
