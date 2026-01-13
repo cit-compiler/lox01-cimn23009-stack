@@ -1,11 +1,8 @@
 package com.craftinginterpreters.lox;
 
-import static com.craftinginterpreters.lox.TokenType.BANG;
-import static com.craftinginterpreters.lox.TokenType.GREATER;
-import static com.craftinginterpreters.lox.TokenType.GREATER_EQUAL;
-import static com.craftinginterpreters.lox.TokenType.LESS;
-import static com.craftinginterpreters.lox.TokenType.LESS_EQUAL;
-import static com.craftinginterpreters.lox.TokenType.MINUS;
+import java.util.List;
+
+import static com.craftinginterpreters.lox.TokenType.*;
 
 public class Interpreter implements Expr.Vision<Object> {
   @Override
@@ -21,9 +18,21 @@ public class Interpreter implements Expr.Vision<Object> {
       case BANG:
         return !isTrusthy(right);
       case MINUS:
+        checkNumberOperand(expr.operator, right);
         return -(double)right;
     }
     return null;
+  }
+
+  private void checkNumberOperand(Token operator, Object operand){
+    if(operand instanceof Double) return;
+    throw new RuntimeError(operator, "Operand must be a number.");
+  }
+
+  private void checkNumberOperands(Token operator, Object left, Object right){
+    if(left instanceof Double && right instanceof Double) return;
+
+    throw new RuntimeError(operator, "Operands must be numbers.");
   }
 
   private boolean isTrusthy(Object object){
@@ -54,15 +63,20 @@ public class Interpreter implements Expr.Vision<Object> {
     Object right = evaluate(expr.right);
 
     switch (expr.operator.type) {
-      case GREATER:
-        return (double)left > (double)right;
-      case GREATER_EQUAL:
-        return (double)left >= (double)right;
-      case LESS:
-        return (double)left < (double)right;
+      case MINUS:
+        checkNumberOperands(expr.operator, left, right);
+        return (double)left - (double)right;
+      case SLASH:
+        checkNumberOperands(expr.operator, left, right);
+        return (double)left / (double)right;
+      case STAR:
+        checkNumberOperands(expr.operator, left, right);
+        return (double)left * (double)right;
       case LESS_EQUAL:
+        checkNumberOperands(expr.operator, left, right);
         return (double)left <= (double)right;
       case MINUS:
+        checkNumberOperands(expr.operator, left, right);
         return (double)left - (double)right;
       case PLUS:
         if(left instanceof Double && right instanceof Double){
@@ -74,9 +88,12 @@ public class Interpreter implements Expr.Vision<Object> {
         }
 
         break;
+        throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
       case SLASH:
+        checkNumberOperands(expr.operator, left, right);
         return (double)left / (double)right;
       case STAR:
+        checkNumberOperands(expr.operator, left, right);
         return (double)left * (double)right;
       case BANG_EQUAL: return !isEqual(left, right);
       case EQUAL_EQUAL: return isEqual(left, right);
